@@ -151,7 +151,9 @@ class SymWorld : public emp::World<Host>{
   }
   
     
-    
+  /*
+                                                                          Update()
+   */   
     
   void Update(size_t new_resources=10) {
     emp::World<Host>::Update();
@@ -166,10 +168,12 @@ class SymWorld : public emp::World<Host>{
   	   
       pop[i]->Process(random);
 
+      //Reproduction
       if (pop[i]->GetPoints() >= 1000) {  // host reproduction                                                                                
 	Symbiont *sym_baby;
 	if (pop[i]->HasSym() && WillTransmit()) { // symbiont's vertical transmission
 	  sym_baby = new Symbiont(pop[i]->GetSymbiont().GetIntVal(), 0.0); // The offspring symbiont is born with its parent's interaction value and 0 resources
+          sym_baby->SetInjector(pop[i]->GetSymbiont().GetInjector());// The offspring symbiont has the same injector as its parent
 	  sym_baby->mutate(random, mut_rate); // mutate the offspring symbiont
 	  pop[i]->GetSymbiont().mutate(random, mut_rate); //mutate the parent symbiont                                                                            
  
@@ -178,7 +182,8 @@ class SymWorld : public emp::World<Host>{
 	  sym_baby = new Symbiont(0.0, -1.0);
 	}
 
-	Host *host_baby = new Host(pop[i]->GetIntVal(),*sym_baby,std::set<int>(), 0.0);
+	Host *host_baby = new Host(pop[i]->GetIntVal(),*sym_baby,std::set<int>(), 0.0); 
+        host_baby->SetOuterProteins(pop[i]->GetOuterProteins());
 	host_baby->mutate(random, mut_rate);
 	
 	// Parent host mutates and loses current resources
@@ -186,6 +191,7 @@ class SymWorld : public emp::World<Host>{
 	pop[i]->SetPoints(0); // Reset the host's resources completely
 	DoBirth(*host_baby, i); // Injects the offspring host into the population and replace a random host
       }
+
       
       if (pop[i]->HasSym() && pop[i]->GetSymbiont().GetPoints() >= 100) {  // symbiont's horizontal transmission
 	pop[i]->ResetSymPoints(); // Symbiont reproduces and loses current resources
@@ -196,11 +202,13 @@ class SymWorld : public emp::World<Host>{
 	// Pick new host to infect, if one exists at the new location and does not already have a symbiont
 	int newLoc = GetRandomCellID();
 	if (IsOccupied(newLoc) == true) {
+          
         //search for specific receptor
-        std::vector<std::string> hostprotein = pop[newLoc]->GetOuterProtein();
+        std::vector<std::string> hostprotein = pop[newLoc]->GetOuterProteins();
         std::vector<std::string>::iterator it;
-        for(int i=0; i<sym_baby->GetInjection().size(); i++){
-            std::string protein = sym_baby->GetInjection()[i];
+
+        for(unsigned int i=0; i<sym_baby->GetInjector().size(); i++){
+            std::string protein = sym_baby->GetInjector()[i];
             it = std::find(hostprotein.begin(), hostprotein.end(), protein);
             if(it != hostprotein.end()){
                 break;
@@ -209,13 +217,13 @@ class SymWorld : public emp::World<Host>{
         
         if(it == hostprotein.end()){
         
-        
+        //One host has one symbiont
 	  if (!pop[newLoc]->HasSym()) {
 	    pop[newLoc]->SetSymbiont(*sym_baby);
 
 	  }
 	}
-        //if there is no such receptor, it dies.
+        //if there is no such receptor, it dies
     
       }                                                                                                                              
  

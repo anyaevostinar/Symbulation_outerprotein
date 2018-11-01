@@ -66,24 +66,25 @@ int main(int argc, char * argv[])
     world.SetupSymIntValFile("SymVals_"+to_string(POP_SIZE)+"_"+to_string(config.SEED())+"_"+to_string(config.VERTICAL_TRANSMISSION())+".data").SetTimingRepeat(10);
     
     
-    //inject
+    //inject initial symbiont 
     for (size_t i = 0; i < POP_SIZE; i++){
         Symbiont new_sym;
         Host *new_org;
         if(random_phen_sym) new_sym = *(new Symbiont(random.GetDouble(-1, 1)));
-        else new_sym = *(new Symbiont(config.SYM_INT()));
+        else {
+          new_sym = *(new Symbiont(config.SYM_INT()));
+    
+        }
         
-        std::vector<std::string> v ={"111"};
-        new_sym.SetInjection(v);
+        new_sym.SetInjector({"111"});
         
         if (random_phen_host) new_org = new Host(random.GetDouble(-1, 1), new_sym);
         else new_org = new Host(config.HOST_INT(), new_sym);
         
-        std::vector<std::string> v2 ={"111", "000"};
-        new_org->SetOuterProtein(v2);
+        new_org->SetOuterProteins({"111"});
        
         //We always put in a symbiont which can inject to host at the very beginning.
-        //TODO: multiple types of symbionts--> conditional injection
+        //TODO: multiple types of symbionts conditional injection
         world.Inject(*new_org);
         
       

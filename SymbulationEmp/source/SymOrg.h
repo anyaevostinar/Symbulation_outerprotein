@@ -5,21 +5,26 @@
 #include <sstream> // stringstream
 #include <vector>
 
+
+/*    
+                                                       Symbiont Class
+
+*/
 class Symbiont {
  private:
     
     
-    double interaction_val;
+  double interaction_val;
   double points;
   std::set<int> res_types; // The parameter res_types is not used in this program. It is here as a potential feature.
-    //the ability to combine with certain type of receptor
-    std::vector<std::string> injection;
+  //the ability to combine with certain type of receptor
+  std::vector<std::string> injector;
 
  public:
 
-    Symbiont(double _intval=0.0, double _points = 0.0, std::set<int> _set = std::set<int>(), std::vector<std::string> _protein = std::vector<std::string>()): interaction_val(_intval), points(_points), res_types(_set), injection(_protein) {}
+ Symbiont(double _intval=0.0, double _points = 0.0, std::set<int> _set = std::set<int>()): interaction_val(_intval), points(_points), res_types(_set) {}
   
-Symbiont(const Symbiont &) = default;
+  Symbiont(const Symbiont &) = default;
   Symbiont(Symbiont &&) = default;
   
 
@@ -29,15 +34,15 @@ Symbiont(const Symbiont &) = default;
   double GetIntVal() const {return interaction_val;}
   double GetPoints() {return points;}
   std::set<int> GetResTypes() const {return res_types;}
-    std::vector<std::string> GetInjection() {return injection;}
+  std::vector<std::string>& GetInjector() {return injector;}
 
   void SetIntVal(double _in) { interaction_val = _in;}
   void SetPoints(double _in) { points = _in;}
   void AddPoints(double _in) { points += _in;}
   void SetResTypes(std::set<int> _in) {res_types = _in;}
-    void SetInjection(std::vector<std::string> _in) {injection = _in;}
+  void SetInjector(std::vector<std::string> _in) {injector = _in;}
     
-    //TODO: mutate outer protein
+  //TODO: mutate outer protein: random chance for each digit to flip(0/1)
   void mutate(emp::Random &random, double mut_rate){
     interaction_val += random.GetRandNormal(0.0, mut_rate);
     if(interaction_val < -1) interaction_val = -1;
@@ -61,17 +66,33 @@ std::string PrintSym(Symbiont  org){
 
 }
 
+
+
+
+/*    
+                                                      Host Class
+
+*/
 class Host {
  private:
   double interaction_val;
   Symbiont sym;
   std::set<int> res_types; // Again, res_types is a potential feature. This parameter is not used in this program.
   double points;
-    std::vector<std::string> outerprotein;
+  std::vector<std::string> outerproteins;
     
  public:
-  // Default constructor for the host class. Each host created from this constructor will have a fake symbiont that has an interaction value of 0 and points of -1.
-    Host(double _intval =0.0, Symbiont _sym = *(new Symbiont(0, -1)), std::set<int> _set = std::set<int>(), double _points = 0.0,  std::vector<std::string> _protein = std::vector<std::string>()): interaction_val(_intval), sym(_sym), res_types(_set), points(_points), outerprotein(_protein) { ; }
+  /*
+  Host() {
+    interaction_val=0;
+    sym=new Symbiont();
+    res_types=std::set<int>();
+    points=0;
+    outerproteins=std::vector<std::string> (1,0);
+    }*/
+  
+  // Constructor for the host class. Each host created from this constructor will have a fake symbiont that has an interaction value of 0 and points of -1.
+ Host(double _intval =0.0, Symbiont _sym = *(new Symbiont(0, -1)), std::set<int> _set = std::set<int>(), double _points = 0.0): interaction_val(_intval), sym(_sym), res_types(_set), points(_points) { ; }
     
   Host(const Host &) = default;
   Host(Host &&) = default;
@@ -87,7 +108,7 @@ class Host {
   Symbiont GetSymbiont() { return sym;}
   std::set<int> GetResTypes() const { return res_types;}
   double GetPoints() { return points;}
-    std::vector<std::string> GetOuterProtein(){return outerprotein;}
+  std::vector<std::string>& GetOuterProteins() {return outerproteins;}
 
 
   void SetIntVal(double _in) {interaction_val = _in;}
@@ -95,7 +116,7 @@ class Host {
   void SetResTypes(std::set<int> _in) {res_types = _in;}
   void SetPoints(double _in) {points = _in;}
   void AddPoints(double _in) {points += _in;}
-    void SetOuterProtein(std::vector<std::string> proteins){outerprotein=proteins;}
+  void SetOuterProteins(std::vector<std::string> proteins){outerproteins=proteins;}
   
   void GiveSymPoints(double _in) {
     double distrib = _in;
@@ -127,14 +148,14 @@ class Host {
   	
   }
 
-    //TODO: mutate outer protein
+  //TODO: mutate outer protein
   void mutate(emp::Random &random, double mut_rate){
     interaction_val += random.GetRandNormal(0.0, mut_rate);
     if(interaction_val < -1) interaction_val = -1;
     else if (interaction_val > 1) interaction_val = 1;
   }
   
-    //certain outerprotein to allow absorbing resources from outside world.
+  //TODO:certain outerprotein to allow absorbing resources from outside world.
   void DistribResources(int resources, double synergy) { 
     double hostIntVal = interaction_val;
     double symIntVal = sym.GetIntVal();
