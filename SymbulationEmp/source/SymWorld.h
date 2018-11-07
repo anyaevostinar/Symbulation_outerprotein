@@ -1,7 +1,6 @@
 #include "source/Evolve/World.h"
 #include "source/tools/Random.h"
 #include <set>
-#include <vector>
 #include "SymOrg.h"
 #include "source/tools/random_utils.h"
 #include "source/data/DataFile.h"
@@ -33,7 +32,9 @@ class SymWorld : public emp::World<Host>{
 
   bool WillTransmit() {
     double transmit = random.GetDouble(0.0, 1.0);
+    //std::cout << transmit << std::endl;
     if (transmit < vertTrans) {
+      //std::cout << "Will transmit" << std::endl;
       return true;
     }  else {
       return false;
@@ -149,86 +150,84 @@ class SymWorld : public emp::World<Host>{
     }
     return *data_node_symintval;
   }
+
   
-    
-  /*
-                                                                          Update()
-   */   
-    
   void Update(size_t new_resources=10) {
     emp::World<Host>::Update();
 
-    //TODO: put in fancy scheduler at some point
     
     emp::vector<size_t> schedule = emp::GetPermutation(random, GetSize());
     
-    // Distribute resources between host and symbiont in each cell 
+    // divvy up and distribute resources to host and symbiont in each cell 
     for (size_t i : schedule) {
-      if (IsOccupied(i) == false) continue;  // no host at that cell
+      if (IsOccupied(i) == false) continue;  // no organism at that cell
   	   
+      //Would like to shove reproduction into Process, but it gets sticky with Symbiont reproduction
+      //Could put repro in Host process and population calls Symbiont process and places offspring as necessary?
       pop[i]->Process(random);
 
-      //Reproduction
-      if (pop[i]->GetPoints() >= 1000) {  // host reproduction                                                                                
+      
+      //Check reproduction
+      if (pop[i]->GetPoints() >= 1000) {  // host replication                                                                                                   
+	// will replicate & mutate a random offset from parent values
+	// while resetting resource points for host and symbiont to zero                                                                                
 	Symbiont *sym_baby;
-	if (pop[i]->HasSym() && WillTransmit()) { // symbiont's vertical transmission
-	  sym_baby = new Symbiont(pop[i]->GetSymbiont().GetIntVal(), 0.0); // The offspring symbiont is born with its parent's interaction value and 0 resources
-          sym_baby->SetInjector(pop[i]->GetSymbiont().GetInjector());// The offspring symbiont has the same injector as its parent
-	  sym_baby->mutate(random, mut_rate); // mutate the offspring symbiont
-	  pop[i]->GetSymbiont().mutate(random, mut_rate); //mutate the parent symbiont                                                                            
+	if (pop[i]->HasSym() && WillTransmit()) { //Vertican transmission!
+          // std::cout << "Vertical transmission" << std::endl;
+	  sym_baby = new Symbiont(pop[i]->GetSymbiont().GetIntVal(), 0.0); //constructor that takes parent values
+
+          //Added
+          sym_baby->SetInjectors(pop[i]->GetSymbiont().GetInjectors());
+          
+	  sym_baby->mutate(random, mut_rate);
+	  pop[i]->GetSymbiont().mutate(random, mut_rate); //mutate parent symbiont                                                                            
  
 	}else{
-	  // The offspring host will be born with no symbiont (i.e., a fake symbiont indicated by having -1 resources)
 	  sym_baby = new Symbiont(0.0, -1.0);
 	}
 
-	Host *host_baby = new Host(pop[i]->GetIntVal(),*sym_baby,std::set<int>(), 0.0); 
+	Host *host_baby = new Host(pop[i]->GetIntVal(),*sym_baby,std::set<int>(), 0.0);
+
+        //Added
         host_baby->SetOuterProteins(pop[i]->GetOuterProteins());
+        
 	host_baby->mutate(random, mut_rate);
-	
-	// Parent host mutates and loses current resources
-	pop[i]->mutate(random, mut_rate); 
-	pop[i]->SetPoints(0); // Reset the host's resources completely
-	DoBirth(*host_baby, i); // Injects the offspring host into the population and replace a random host
+	pop[i]->mutate(random, mut_rate); //parent mutates and loses current resources, ie new organism but same symbiont  
+	pop[i]->SetPoints(0);
+	//TODO: is this how I did it for the dissertation? reset parent completely?
+	DoBirth(*host_baby, i); //Automatically deals with grid
       }
 
-      
-      if (pop[i]->HasSym() && pop[i]->GetSymbiont().GetPoints() >= 100) {  // symbiont's horizontal transmission
-	pop[i]->ResetSymPoints(); // Symbiont reproduces and loses current resources
+      //Symbionts Replication
+      if (pop[i]->HasSym() && pop[i]->GetSymbiont().GetPoints() >= 100) {  
+	//TODO: check symbiont reproduction value
+	// symbiont reproduces independently (horizontal transmission) if it has >= 100 resources
+	// new symbiont in this host with mutated value
+	// TODO: Make SymDoBirth instead of injecting
+	pop[i]->ResetSymPoints();
 	Symbiont *sym_baby = new Symbiont(pop[i]->GetSymbiont());
-	sym_baby->mutate(random, mut_rate);
+
+        //Added
+        sym_baby->SetInjectors(pop[i]->GetSymbiont().GetInjectors());
+
+      
+
+        sym_baby->mutate(random, mut_rate);
 	pop[i]->GetSymbiont().mutate(random, mut_rate);
-	 	 
-	// Pick new host to infect, if one exists at the new location and does not already have a symbiont
+
+  	 	 
+	// pick new host to infect, if one exists at the new location and does NOT already have a symbiont
 	int newLoc = GetRandomCellID();
 	if (IsOccupied(newLoc) == true) {
-          
-        //search for specific receptor
-        std::vector<std::string> hostprotein = pop[newLoc]->GetOuterProteins();
-        std::vector<std::string>::iterator it;
-
-        for(unsigned int i=0; i<sym_baby->GetInjector().size(); i++){
-            std::string protein = sym_baby->GetInjector()[i];
-            it = std::find(hostprotein.begin(), hostprotein.end(), protein);
-            if(it != hostprotein.end()){
-                break;
-            }
-        }
-        
-        if(it == hostprotein.end()){
-        
-        //One host has one symbiont
+ 		   
 	  if (!pop[newLoc]->HasSym()) {
 	    pop[newLoc]->SetSymbiont(*sym_baby);
 
 	  }
 	}
-        //if there is no such receptor, it dies
-    
       }                                                                                                                              
  
     }
-  }
   }
 
 };
