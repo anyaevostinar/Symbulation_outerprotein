@@ -13,7 +13,7 @@ class Symbiont {
   std::set<int> res_types;
 
   //Added
-  std::vector<std::string> injectors; 
+  std::vector<std::string> injectors={"111"}; 
 
 
  public:
@@ -74,7 +74,7 @@ class Host {
   double points;
 
   //Added
-  std::vector<std::string> OuterProteins;
+  std::vector<std::string> OuterProteins={"111"};
 
  public:
  Host(double _intval =0.0, Symbiont _sym = *(new Symbiont(0, -1)), std::set<int> _set = std::set<int>(), double _points = 0.0)
@@ -149,7 +149,9 @@ class Host {
 
   //TODO: distribute only has specific outer proteins
   void DistribResources(int resources, double synergy) { 
-   
+
+    std::vector<std::string> sym_injectors = sym.GetInjectors();
+    bool success = false;
     double hostIntVal = interaction_val; 
     double symIntVal = sym.GetIntVal();
     
@@ -157,69 +159,80 @@ class Host {
     double hostDonation = 0.0;
     double symPortion = 0.0;
     double symReturn = 0.0;
-    double bonus = synergy; 
+    double bonus = synergy;
 
-    if (hostIntVal >= 0 && symIntVal >= 0)  {  
-      hostDonation = resources * hostIntVal;
-      hostPortion = resources - hostDonation;
-      
-      if (symIntVal > 0){ //Do SymReturn and GiveSymPoints only when the host has a symbiont
-        symReturn = (hostDonation * symIntVal) * bonus;  
-        symPortion = hostDonation - (hostDonation * symIntVal);
-
-        hostPortion += symReturn;
-	    
-        this->GiveSymPoints(symPortion);
+    //Added
+    for(int i=0; i<sym_injectors.size();i++){
+      for(int j=0; j<OuterProteins.size();j++){
+        if(sym_injectors.at(i)==OuterProteins.at(j))
+          success=true;
       }
-      
-      this->AddPoints(hostPortion);
-	    
-    } else if (hostIntVal <= 0 && symIntVal < 0) {
-      double hostDefense = -1.0 * (hostIntVal * resources);
-      double remainingResources = 0.0;
-      remainingResources = resources - hostDefense;
-      
-      if (symIntVal < hostIntVal) {
-        double symSteals = (hostIntVal - symIntVal) * remainingResources;
-        symPortion = symSteals;
-        hostPortion = remainingResources - symSteals;
-      } else { 
-        symPortion = 0.0;
-        hostPortion = remainingResources;
-	     	
-      }
-   
-      this->GiveSymPoints(symPortion);
-      this->AddPoints(hostPortion);
-	     
-	
-    } else if (hostIntVal > 0 && symIntVal < 0) {
-      hostDonation = hostIntVal * resources;
-      hostPortion = resources - hostDonation;
-      resources = resources - hostDonation;
-		
-      double symSteals = -1.0 * (resources * symIntVal);
-      hostPortion = hostPortion - symSteals;
-      symPortion = hostDonation + symSteals;
-		
-      this->GiveSymPoints(symPortion);
-      this->AddPoints(hostPortion);
-		
-		
-    } else if (hostIntVal < 0 && symIntVal >= 0) {
-      double hostDefense = -1.0 * (hostIntVal * resources);
-      hostPortion = resources - hostDefense;
-		
-      if (symIntVal > 0){//Give symbiont points only if a symbiont exists
-        symPortion = 0.0;
-		
-        this->GiveSymPoints(symPortion);
-      }
-      this->AddPoints(hostPortion);
-    } else {
-      
     }
 
+    if(success){
+
+      if (hostIntVal >= 0 && symIntVal >= 0)  {  
+        hostDonation = resources * hostIntVal;
+        hostPortion = resources - hostDonation;
+      
+        if (symIntVal > 0){ //Do SymReturn and GiveSymPoints only when the host has a symbiont
+          symReturn = (hostDonation * symIntVal) * bonus;  
+          symPortion = hostDonation - (hostDonation * symIntVal);
+
+          hostPortion += symReturn;
+	    
+          this->GiveSymPoints(symPortion);
+        }
+      
+        this->AddPoints(hostPortion);
+	    
+      } else if (hostIntVal <= 0 && symIntVal < 0) {
+        double hostDefense = -1.0 * (hostIntVal * resources);
+        double remainingResources = 0.0;
+        remainingResources = resources - hostDefense;
+      
+        if (symIntVal < hostIntVal) {
+          double symSteals = (hostIntVal - symIntVal) * remainingResources;
+          symPortion = symSteals;
+          hostPortion = remainingResources - symSteals;
+        } else { 
+          symPortion = 0.0;
+          hostPortion = remainingResources;
+	     	
+        }
+   
+        this->GiveSymPoints(symPortion);
+        this->AddPoints(hostPortion);
+	     
+	
+      } else if (hostIntVal > 0 && symIntVal < 0) {
+        hostDonation = hostIntVal * resources;
+        hostPortion = resources - hostDonation;
+        resources = resources - hostDonation;
+		
+        double symSteals = -1.0 * (resources * symIntVal);
+        hostPortion = hostPortion - symSteals;
+        symPortion = hostDonation + symSteals;
+		
+        this->GiveSymPoints(symPortion);
+        this->AddPoints(hostPortion);
+		
+		
+      } else if (hostIntVal < 0 && symIntVal >= 0) {
+        double hostDefense = -1.0 * (hostIntVal * resources);
+        hostPortion = resources - hostDefense;
+		
+        if (symIntVal > 0){//Give symbiont points only if a symbiont exists
+          symPortion = 0.0;
+		
+          this->GiveSymPoints(symPortion);
+        }
+        this->AddPoints(hostPortion);
+      } else {
+      
+      }
+
+    }
   }
 
   void Process(emp::Random &random) {
