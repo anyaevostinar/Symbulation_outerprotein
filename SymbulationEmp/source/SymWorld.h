@@ -175,16 +175,23 @@ class SymWorld : public emp::World<Host>{
 	if (pop[i]->HasSym() && WillTransmit()) { //Vertican transmission!
           // std::cout << "Vertical transmission" << std::endl;
 	  sym_baby = new Symbiont(pop[i]->GetSymbiont().GetIntVal(), 0.0); //constructor that takes parent values
-
           //Added
-          sym_baby->SetInjectors(pop[i]->GetSymbiont().GetInjectors());
+          //if(pop[i]->HasSym()) sym_baby->SetInjectors(pop[i]->GetSymbiont().GetInjectors());
+          //TODO: change this!!!!!
+          //else sym_baby->SetInjectors({"111"});
           
 	  sym_baby->mutate(random, mut_rate);
 	  pop[i]->GetSymbiont().mutate(random, mut_rate); //mutate parent symbiont                                                                            
  
 	}else{
 	  sym_baby = new Symbiont(0.0, -1.0);
+          //TODO: change this!!!!!
+          //sym_baby->SetInjectors({"111"});
 	}
+
+        
+        //Added
+        sym_baby->SetInjectors({"111"});
 
 	Host *host_baby = new Host(pop[i]->GetIntVal(),*sym_baby,std::set<int>(), 0.0);
 
@@ -221,8 +228,21 @@ class SymWorld : public emp::World<Host>{
 	if (IsOccupied(newLoc) == true) {
  		   
 	  if (!pop[newLoc]->HasSym()) {
-	    pop[newLoc]->SetSymbiont(*sym_baby);
 
+            std::vector<std::string> injectors = sym_baby->GetInjectors();
+            std::vector<std::string> proteins = pop[newLoc]->GetOuterProteins();
+            bool success = false;
+            for(int i=0;i<injectors.size();i++){
+              for(int j=0;j<proteins.size();j++){
+                if(injectors.at(i)==proteins.at(j)){
+                  success = true;
+                }
+              }
+            }
+           
+            if(success){
+              pop[newLoc]->SetSymbiont(*sym_baby);
+            }
 	  }
 	}
       }                                                                                                                              
