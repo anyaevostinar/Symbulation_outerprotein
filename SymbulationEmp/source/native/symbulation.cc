@@ -91,10 +91,10 @@ int main(int argc, char * argv[])
       for(int i=0; i<hostproteins.size(); i++){
         for(int j=0; j<injectors.size(); j++){
           if(hostproteins.at(i)==injectors.at(j)){
-            std::cout << injectors.at(j)<<"\n";
-            count++;
+            //std::cout << injectors.at(j)<<"\n";
+            //count++;
             through=true;
-            std::cout << count<< "\n";
+            //std::cout << count<< "\n";
           }
         }
       }
@@ -104,7 +104,7 @@ int main(int argc, char * argv[])
       }
 
       else{
-        std::cout<< "hey";
+        std::cout<< "No receptors; injection failed\n";
       }
 
       
