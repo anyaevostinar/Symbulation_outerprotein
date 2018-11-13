@@ -5,7 +5,6 @@
 #include "source/config/ArgManager.h"
 #include <vector>
 #include <string>
-
 using namespace std;
 
 EMP_BUILD_CONFIG( SymConfigBase,
@@ -19,10 +18,9 @@ EMP_BUILD_CONFIG( SymConfigBase,
                  VALUE(GRID_X, int, 5, "Width of the world"),
                  VALUE(GRID_Y, int, 5, "Height of world"),
                  VALUE(UPDATES, int, 1, "Number of updates to run before quitting"),
-
+                  
                  )
 //TODO: add option for random host and sym int values
-
 
 	
 int main(int argc, char * argv[])
@@ -85,7 +83,7 @@ int main(int argc, char * argv[])
       std::vector<std::string> hostproteins = new_org->GetOuterProteins();
       std::vector<std::string> injectors = new_sym.GetInjectors();
       bool through = false;
-      int count=0;
+      // int count=0;
       
   
       for(int i=0; i<hostproteins.size(); i++){
