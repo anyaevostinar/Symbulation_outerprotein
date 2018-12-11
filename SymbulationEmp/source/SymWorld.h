@@ -7,7 +7,7 @@
 
 class SymWorld : public emp::World<Host>{
  private:
-  double vertTrans = 0; 
+  //double vertTrans = 0; 
   double mut_rate = 0;
   emp::Random random;
   
@@ -21,15 +21,16 @@ class SymWorld : public emp::World<Host>{
       os << PrintHost(&org);
     };
   }
-  
+  /*
   void SetVertTrans(double vt) {
     vertTrans = vt;
   }
+  */
   void SetMutRate(double mut) {
     mut_rate = mut;
   }
 
-
+  /*
   bool WillTransmit() {
     double transmit = random.GetDouble(0.0, 1.0);
     //std::cout << transmit << std::endl;
@@ -42,7 +43,7 @@ class SymWorld : public emp::World<Host>{
     
 
   }
-
+  */
   emp::DataFile & SetupSymIntValFile(const std::string & filename) {
     auto & file = SetupFile(filename);
     auto & node = GetSymIntValDataNode();
@@ -172,9 +173,14 @@ class SymWorld : public emp::World<Host>{
 	// will replicate & mutate a random offset from parent values
 	// while resetting resource points for host and symbiont to zero                                                                                
 	Symbiont *sym_baby;
-	if (pop[i]->HasSym() && WillTransmit()) { //Vertican transmission!
+
+        //changed
+	if (pop[i]->HasSym() && pop[i]->GetSymbiont().WillTransmit()) { //Vertican transmission!
           // std::cout << "Vertical transmission" << std::endl;
 	  sym_baby = new Symbiont(pop[i]->GetSymbiont().GetIntVal(), 0.0); //constructor that takes parent values
+          //Added
+          sym_baby->SetVertTrans(pop[i]->GetSymbiont().GetVertTrans());
+          // std::cout << "ssss" << pop[i]->GetSymbiont().GetVertTrans();
           //Added
           //if(pop[i]->HasSym()) sym_baby->SetInjectors(pop[i]->GetSymbiont().GetInjectors());
           //TODO: change this!!!!!

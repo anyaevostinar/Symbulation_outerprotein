@@ -4,21 +4,23 @@
 #include <iomanip> // setprecision
 #include <sstream> // stringstream
 #include <vector>
+#include "source/tools/random_utils.h"
 
 
 class Symbiont {
  private:  
   double interaction_val;
   double points;
+  //Added
+  double vertTrans;
   std::set<int> res_types;
-
   //Added
   std::vector<std::string> injectors={"111"}; 
 
 
  public:
 
-  Symbiont(double _intval=0.0, double _points = 0.0, std::set<int> _set = std::set<int>())
+ Symbiont(double _intval=0.0, double _points = 0.0, std::set<int> _set = std::set<int>())
    : interaction_val(_intval), points(_points), res_types(_set) {}
   Symbiont(const Symbiont &) = default;
   Symbiont(Symbiont &&) = default;
@@ -33,10 +35,15 @@ class Symbiont {
   double GetIntVal() const {return interaction_val;}
   double GetPoints() {return points;}
   std::set<int> GetResTypes() const {return res_types;}
+  //Added
+  double GetVertTrans() {return vertTrans;}
 
   //Added
   std::vector<std::string> GetInjectors() {return injectors;}
 
+  //Added
+  void SetVertTrans(double _in){ vertTrans = _in;}
+  
   void SetIntVal(double _in) { interaction_val = _in;}
   void SetPoints(double _in) { points = _in;}
   void AddPoints(double _in) { points += _in;}
@@ -52,7 +59,29 @@ class Symbiont {
     else if (interaction_val > 1) interaction_val = 1;
   }
 
+  //Added
+  bool WillTransmit() {
+    double transmit = ((double) rand() / (RAND_MAX));
+    // std::cout<< "tran" << transmit;
+    // double transmit =(double) random.GetDouble(0.0, 1.0);
+    //std::cout << transmit << std::endl;
+    if (transmit < vertTrans) {
+      //std::cout << "Will transmit" << std::endl;
+      return true;
+    }  else {
+      return false;
+    }
+    
+
+  }
+
+
+
+  
+
 };
+
+
 
 std::string PrintSym(Symbiont  org){
   if (org.GetPoints() < 0) return "-";
@@ -72,7 +101,9 @@ class Host {
   Symbiont sym;
   std::set<int> res_types;
   double points;
-
+  //Added
+  std::vector<std::string> resource_request= {"111"};
+  
   //Added
   std::vector<std::string> OuterProteins={"111"};
 
@@ -147,11 +178,12 @@ class Host {
     else if (interaction_val > 1) interaction_val = 1;
   }
 
-  //TODO: distribute only has specific outer proteins
+
   void DistribResources(int resources, double synergy) { 
 
     std::vector<std::string> sym_injectors = sym.GetInjectors();
     bool success = false;
+    bool distribute = false;
     double hostIntVal = interaction_val; 
     double symIntVal = sym.GetIntVal();
     
@@ -162,14 +194,27 @@ class Host {
     double bonus = synergy;
 
     //Added
-    for(int i=0; i<sym_injectors.size();i++){
-      for(int j=0; j<OuterProteins.size();j++){
-        if(sym_injectors.at(i)==OuterProteins.at(j))
-          success=true;
+    //Distribute only when host has certain protein to recept resources
+    for(unsigned int i=0; i<OuterProteins.size();i++){
+      for(unsigned int j=0; j<resource_request.size(); j++){
+        if(OuterProteins.at(i)==resource_request.at(j)){
+          distribute = true;
+          break;
+        }
       }
     }
 
-    if(success){
+    //Added
+    for(unsigned int i=0; i<sym_injectors.size();i++){
+      for(unsigned int j=0; j<OuterProteins.size();j++){
+        if(sym_injectors.at(i)==OuterProteins.at(j)){
+          success=true;
+          break;
+        }
+      }
+    }
+
+    if(success && distribute){
 
       if (hostIntVal >= 0 && symIntVal >= 0)  {  
         hostDonation = resources * hostIntVal;
